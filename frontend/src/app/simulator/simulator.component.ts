@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { CapComponent } from './cap/cap.component';
 import { OverlapGraphComponent } from './overlap-graph/overlap-graph.component';
+import { MoverComponent } from './mover/mover.component';
 import { PenComponent } from './pen/pen.component';
 
 const PEN_PATH = `
@@ -40,7 +41,7 @@ const CANVAS_H = PEN_Y + 1800 + OFFSET_RANGE * 2;
 @Component({
   selector: 'app-simulator',
   standalone: true,
-  imports: [CapComponent, OverlapGraphComponent, PenComponent],
+  imports: [CapComponent, MoverComponent, OverlapGraphComponent, PenComponent],
   templateUrl: './simulator.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -58,9 +59,16 @@ export class SimulatorComponent {
   readonly TILT_STEP = 0.01;
   readonly OFFSET_MIN = -10;
   readonly OFFSET_MAX = 10;
+  readonly MOVER_TILT_MIN = -3;
+  readonly MOVER_TILT_MAX = 3;
+  readonly MOVER_TILT_STEP = 0.01;
+  readonly MOVER_NUMBER_MIN = 1;
+  readonly MOVER_NUMBER_MAX = 12;
 
   capPercent = signal(0);
   capTranslateY = signal(0);
+  moverTilt = signal(0);
+  moverNumber = signal(1);
   penTilt = signal(0);
   penOffsetX = signal(0);
   penOffsetY = signal(0);
@@ -108,6 +116,18 @@ export class SimulatorComponent {
     this.calculateOverlap();
   }
 
+  onMoverTiltInput(event: Event) {
+    const value = +(event.target as HTMLInputElement).value;
+    this.moverTilt.set(value);
+    this.renderPenCanvas();
+    this.calculateOverlap();
+  }
+
+  onMoverNumberInput(event: Event) {
+    const value = +(event.target as HTMLInputElement).value;
+    this.moverNumber.set(value);
+  }
+
   onCapOffsetInput(axis: 'x' | 'y', event: Event) {
     const value = +(event.target as HTMLInputElement).value;
     if (axis === 'x') this.capOffsetX.set(value);
@@ -125,7 +145,7 @@ export class SimulatorComponent {
     const cx = px + 225;
     const cy = py + 900;
     ctx.translate(cx, cy);
-    ctx.rotate((this.penTilt() * Math.PI) / 180);
+    ctx.rotate(((this.moverTilt() + this.penTilt()) * Math.PI) / 180);
     ctx.translate(-cx, -cy);
     ctx.translate(px, py);
     ctx.fill(this.penPath);
@@ -201,5 +221,65 @@ export class SimulatorComponent {
     }
 
     this.overlapPixelCount.set(count);
+  }
+
+  downloadPng() {
+    const canvas = new OffscreenCanvas(CANVAS_W, CANVAS_H);
+    const ctx = canvas.getContext('2d')!;
+
+    const px = PEN_X + OFFSET_RANGE + this.penOffsetX();
+    const py = PEN_Y + OFFSET_RANGE + this.penOffsetY();
+    const cx = px + 225;
+    const cy = py + 900;
+    const totalTilt = ((this.moverTilt() + this.penTilt()) * Math.PI) / 180;
+
+    // Draw pen
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(totalTilt);
+    ctx.translate(-cx, -cy);
+    ctx.translate(px, py);
+    ctx.fillStyle = 'steelblue';
+    ctx.fill(this.penPath);
+    ctx.restore();
+
+    // Draw mover (on top of pen)
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((this.moverTilt() * Math.PI) / 180);
+    ctx.translate(-cx, -cy);
+    ctx.translate(px - 45, py + 1200);
+    ctx.beginPath();
+    ctx.roundRect(0, 0, 540, 600, 10);
+    ctx.fillStyle = '#888';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(8, 8, 524, 584, 6);
+    ctx.fillStyle = '#aaa';
+    ctx.fill();
+    ctx.fillStyle = '#555';
+    ctx.font = 'bold 120px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this.moverNumber().toString(), 270, 540);
+    ctx.restore();
+
+    // Draw cap
+    ctx.save();
+    const capAbsY = OFFSET_RANGE + this.capTranslateY() + this.capOffsetY();
+    ctx.translate(OFFSET_RANGE + this.capOffsetX(), capAbsY);
+    ctx.fillStyle = 'red';
+    ctx.globalAlpha = this.CAP_OPACITY;
+    ctx.fill(this.capPath);
+    ctx.restore();
+
+    canvas.convertToBlob({ type: 'image/png' }).then((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'simulator.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
   }
 }
