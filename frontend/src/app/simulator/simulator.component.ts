@@ -33,8 +33,9 @@ const CAP_PATH = `
 
 const PEN_X = 30;
 const PEN_Y = 520;
-const CANVAS_W = 510;
-const CANVAS_H = PEN_Y + 1800;
+const OFFSET_RANGE = 50;
+const CANVAS_W = 510 + OFFSET_RANGE * 2;
+const CANVAS_H = PEN_Y + 1800 + OFFSET_RANGE * 2;
 
 @Component({
   selector: 'app-simulator',
@@ -49,9 +50,21 @@ export class SimulatorComponent {
   readonly SNAP_TRANSLATE_Y = 490;
   readonly FRAME_MS = 16;
 
+  readonly CAP_POSITION_MIN = 0;
+  readonly CAP_POSITION_MAX = 100;
+  readonly TILT_MIN = -3;
+  readonly TILT_MAX = 3;
+  readonly TILT_STEP = 0.01;
+  readonly OFFSET_MIN = -10;
+  readonly OFFSET_MAX = 10;
+
   capPercent = signal(0);
   capTranslateY = signal(0);
   penTilt = signal(0);
+  penOffsetX = signal(0);
+  penOffsetY = signal(0);
+  capOffsetX = signal(0);
+  capOffsetY = signal(0);
   snapped = signal(false);
   overlapPixelCount = signal(0);
   overlapHistory = signal<number[]>([]);
@@ -86,17 +99,34 @@ export class SimulatorComponent {
     this.calculateOverlap();
   }
 
+  onPenOffsetInput(axis: 'x' | 'y', event: Event) {
+    const value = +(event.target as HTMLInputElement).value;
+    if (axis === 'x') this.penOffsetX.set(value);
+    else this.penOffsetY.set(value);
+    this.renderPenCanvas();
+    this.calculateOverlap();
+  }
+
+  onCapOffsetInput(axis: 'x' | 'y', event: Event) {
+    const value = +(event.target as HTMLInputElement).value;
+    if (axis === 'x') this.capOffsetX.set(value);
+    else this.capOffsetY.set(value);
+    this.calculateOverlap();
+  }
+
   private renderPenCanvas() {
     const ctx = this.penCanvas.getContext('2d')!;
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
     ctx.save();
+    const px = PEN_X + OFFSET_RANGE + this.penOffsetX();
+    const py = PEN_Y + OFFSET_RANGE + this.penOffsetY();
     // Rotate around pen center
-    const cx = PEN_X + 225;
-    const cy = PEN_Y + 900;
+    const cx = px + 225;
+    const cy = py + 900;
     ctx.translate(cx, cy);
     ctx.rotate((this.penTilt() * Math.PI) / 180);
     ctx.translate(-cx, -cy);
-    ctx.translate(PEN_X, PEN_Y);
+    ctx.translate(px, py);
     ctx.fill(this.penPath);
     ctx.restore();
   }
@@ -132,15 +162,13 @@ export class SimulatorComponent {
   }
 
   private calculateOverlap() {
-    const capY = this.capTranslateY();
+    const capAbsY = OFFSET_RANGE + this.capTranslateY() + this.capOffsetY();
+    const penAbsY = PEN_Y + OFFSET_RANGE + this.penOffsetY();
 
-    // Determine the vertical overlap region
-    const capTop = capY;
-    const capBottom = capY + 320;
-    const penTop = PEN_Y;
-    const penBottom = PEN_Y + 1800;
-
-    const overlapTop = Math.max(capTop, penTop);
+    // Vertical overlap region
+    const capBottom = capAbsY + 320;
+    const penBottom = penAbsY + 1800;
+    const overlapTop = Math.max(capAbsY, penAbsY);
     const overlapBottom = Math.min(capBottom, penBottom);
 
     if (overlapTop >= overlapBottom) {
@@ -148,23 +176,21 @@ export class SimulatorComponent {
       return;
     }
 
+    const regionY = Math.floor(overlapTop);
     const regionH = Math.ceil(overlapBottom - overlapTop);
 
-    // Draw cap in the overlap region only
+    // Draw cap onto its canvas
     const capCtx = this.capCanvas.getContext('2d')!;
-    capCtx.clearRect(0, 0, CANVAS_W, regionH);
+    capCtx.clearRect(0, 0, CANVAS_W, CANVAS_H);
     capCtx.save();
-    capCtx.translate(0, -overlapTop);
-    capCtx.translate(0, capY);
+    capCtx.translate(OFFSET_RANGE + this.capOffsetX(), capAbsY);
     capCtx.fill(this.capPath);
     capCtx.restore();
 
-    const capData = capCtx.getImageData(0, 0, CANVAS_W, regionH).data;
-
-    // Get pen pixels for the same region
+    const capData = capCtx.getImageData(0, regionY, CANVAS_W, regionH).data;
     const penData = this.penCanvas
       .getContext('2d')!
-      .getImageData(0, Math.floor(overlapTop), CANVAS_W, regionH).data;
+      .getImageData(0, regionY, CANVAS_W, regionH).data;
 
     let count = 0;
     for (let i = 3; i < penData.length; i += 4) {
