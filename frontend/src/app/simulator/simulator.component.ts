@@ -45,6 +45,7 @@ const CANVAS_H = PEN_Y + 1800 + OFFSET_RANGE * 2;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SimulatorComponent {
+  readonly VISUAL_SCALE = 0.33;
   readonly CAP_OPACITY = 0.8;
   readonly ANIMATION_DURATION_MS = 700;
   readonly SNAP_TRANSLATE_Y = 490;

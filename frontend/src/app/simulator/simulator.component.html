@@ -69,21 +69,31 @@
     />
   </div>
 
-  <div class="relative border border-dashed border-gray-400" style="width: 510px; height: 2320px">
-    <app-cap
-      class="block absolute left-0 top-0 z-10"
-      [style.opacity]="CAP_OPACITY"
-      [style.transform]="
-        'translate(' + capOffsetX() + 'px,' + (capTranslateY() + capOffsetY()) + 'px)'
-      "
-    />
-    <app-pen
-      class="block absolute left-[30px] top-[520px]"
-      style="transform-origin: 225px 900px"
-      [style.transform]="
-        'translate(' + penOffsetX() + 'px,' + penOffsetY() + 'px) rotate(' + penTilt() + 'deg)'
-      "
-    />
+  <div
+    class="overflow-hidden"
+    [style.width.px]="510 * VISUAL_SCALE"
+    [style.height.px]="2320 * VISUAL_SCALE"
+  >
+    <div
+      class="relative border border-dashed border-gray-400 origin-top-left"
+      style="width: 510px; height: 2320px"
+      [style.transform]="'scale(' + VISUAL_SCALE + ')'"
+    >
+      <app-cap
+        class="block absolute left-0 top-0 z-10"
+        [style.opacity]="CAP_OPACITY"
+        [style.transform]="
+          'translate(' + capOffsetX() + 'px,' + (capTranslateY() + capOffsetY()) + 'px)'
+        "
+      />
+      <app-pen
+        class="block absolute left-[30px] top-[520px]"
+        style="transform-origin: 225px 900px"
+        [style.transform]="
+          'translate(' + penOffsetX() + 'px,' + penOffsetY() + 'px) rotate(' + penTilt() + 'deg)'
+        "
+      />
+    </div>
   </div>
 
   <div>
