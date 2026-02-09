@@ -98,43 +98,14 @@
     />
   </div>
 
-  <div
-    class="overflow-hidden"
-    [style.width.px]="640 * VISUAL_SCALE"
-    [style.height.px]="2420 * VISUAL_SCALE"
-  >
-    <div
-      class="relative border border-dashed border-gray-400 origin-top-left"
-      style="width: 640px; height: 2420px"
-      [style.transform]="'scale(' + VISUAL_SCALE + ')'"
-    >
-      <app-cap
-        class="block absolute left-[60px] top-0 z-20"
-        [style.opacity]="CAP_OPACITY"
-        [style.transform]="
-          'translate(' + capOffsetX() + 'px,' + (capTranslateY() + capOffsetY()) + 'px)'
-        "
-      />
-      <div
-        class="absolute left-[90px] top-[520px]"
-        style="transform-origin: 225px 900px"
-        [style.transform]="
-          'translate(' + penOffsetX() + 'px,' + penOffsetY() + 'px) rotate(' + moverTilt() + 'deg)'
-        "
-      >
-        <app-pen
-          class="block relative"
-          style="transform-origin: 225px 900px"
-          [style.transform]="'rotate(' + penTilt() + 'deg)'"
-        />
-        <app-mover
-          class="block absolute z-10"
-          style="left: -45px; top: 1200px"
-          [moverNumber]="moverNumber()"
-        />
-      </div>
-    </div>
-  </div>
+  <canvas
+    #display
+    [width]="CANVAS_W"
+    [height]="CANVAS_H"
+    class="border border-dashed border-gray-400"
+    [style.width.px]="CANVAS_W * VISUAL_SCALE"
+    [style.height.px]="CANVAS_H * VISUAL_SCALE"
+  ></canvas>
 
   <div>
     <div class="text-sm font-semibold">Overlap</div>

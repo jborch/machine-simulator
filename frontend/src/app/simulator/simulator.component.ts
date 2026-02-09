@@ -1,8 +1,12 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { CapComponent } from './cap/cap.component';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { OverlapGraphComponent } from './overlap-graph/overlap-graph.component';
-import { MoverComponent } from './mover/mover.component';
-import { PenComponent } from './pen/pen.component';
 
 const PEN_PATH = `
   M 40 0 L 440 0 A 10 10 0 0 1 450 10
@@ -41,11 +45,13 @@ const CANVAS_H = PEN_Y + 1800 + OFFSET_RANGE * 2;
 @Component({
   selector: 'app-simulator',
   standalone: true,
-  imports: [CapComponent, MoverComponent, OverlapGraphComponent, PenComponent],
+  imports: [OverlapGraphComponent],
   templateUrl: './simulator.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SimulatorComponent {
+  readonly CANVAS_W = CANVAS_W;
+  readonly CANVAS_H = CANVAS_H;
   readonly VISUAL_SCALE = 0.33;
   readonly CAP_OPACITY = 0.8;
   readonly ANIMATION_DURATION_MS = 700;
@@ -78,6 +84,7 @@ export class SimulatorComponent {
   overlapPixelCount = signal(0);
   overlapHistory = signal<number[]>([]);
 
+  private displayCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('display');
   private penCanvas: OffscreenCanvas;
   private capCanvas: OffscreenCanvas;
   private penPath: Path2D;
@@ -91,6 +98,8 @@ export class SimulatorComponent {
     this.capCanvas = new OffscreenCanvas(CANVAS_W, CANVAS_H);
 
     this.renderPenCanvas();
+
+    afterNextRender(() => this.renderDisplay());
   }
 
   onSliderInput(event: Event) {
@@ -99,6 +108,7 @@ export class SimulatorComponent {
     this.capTranslateY.set((value / 100) * this.SNAP_TRANSLATE_Y);
     this.snapped.set(value === 100);
     this.calculateOverlap();
+    this.renderDisplay();
   }
 
   onTiltInput(event: Event) {
@@ -106,6 +116,7 @@ export class SimulatorComponent {
     this.penTilt.set(value);
     this.renderPenCanvas();
     this.calculateOverlap();
+    this.renderDisplay();
   }
 
   onPenOffsetInput(axis: 'x' | 'y', event: Event) {
@@ -114,6 +125,7 @@ export class SimulatorComponent {
     else this.penOffsetY.set(value);
     this.renderPenCanvas();
     this.calculateOverlap();
+    this.renderDisplay();
   }
 
   onMoverTiltInput(event: Event) {
@@ -121,11 +133,13 @@ export class SimulatorComponent {
     this.moverTilt.set(value);
     this.renderPenCanvas();
     this.calculateOverlap();
+    this.renderDisplay();
   }
 
   onMoverNumberInput(event: Event) {
     const value = +(event.target as HTMLInputElement).value;
     this.moverNumber.set(value);
+    this.renderDisplay();
   }
 
   onCapOffsetInput(axis: 'x' | 'y', event: Event) {
@@ -133,6 +147,7 @@ export class SimulatorComponent {
     if (axis === 'x') this.capOffsetX.set(value);
     else this.capOffsetY.set(value);
     this.calculateOverlap();
+    this.renderDisplay();
   }
 
   private renderPenCanvas() {
@@ -168,6 +183,7 @@ export class SimulatorComponent {
       this.capTranslateY.set(y);
       this.capPercent.set(Math.round((y / this.SNAP_TRANSLATE_Y) * 100));
       this.calculateOverlap();
+      this.renderDisplay();
 
       if (!isSnapped) {
         this.overlapHistory.update((h) => [...h, this.overlapPixelCount()]);
@@ -223,9 +239,14 @@ export class SimulatorComponent {
     this.overlapPixelCount.set(count);
   }
 
-  downloadPng() {
-    const canvas = new OffscreenCanvas(CANVAS_W, CANVAS_H);
+  private renderDisplay() {
+    const canvas = this.displayCanvas().nativeElement;
     const ctx = canvas.getContext('2d')!;
+    this.drawScene(ctx);
+  }
+
+  private drawScene(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
+    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
     const px = PEN_X + OFFSET_RANGE + this.penOffsetX();
     const py = PEN_Y + OFFSET_RANGE + this.penOffsetY();
@@ -272,7 +293,11 @@ export class SimulatorComponent {
     ctx.globalAlpha = this.CAP_OPACITY;
     ctx.fill(this.capPath);
     ctx.restore();
+  }
 
+  downloadPng() {
+    const canvas = new OffscreenCanvas(CANVAS_W, CANVAS_H);
+    this.drawScene(canvas.getContext('2d')!);
     canvas.convertToBlob({ type: 'image/png' }).then((blob) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
