@@ -16,6 +16,17 @@
       (input)="onSliderInput($event)"
       class="w-full mt-1"
     />
+
+    <label class="mt-4 block text-sm">Pen tilt: {{ penTilt() }}&deg;</label>
+    <input
+      type="range"
+      min="-5"
+      max="5"
+      step="0.1"
+      [value]="penTilt()"
+      (input)="onTiltInput($event)"
+      class="w-full mt-1"
+    />
   </div>
 
   <div class="relative border border-dashed border-gray-400" style="width: 510px; height: 2320px">
@@ -24,7 +35,11 @@
       [style.opacity]="CAP_OPACITY"
       [style.transform]="'translateY(' + capTranslateY() + 'px)'"
     />
-    <app-pen class="block absolute left-[30px] top-[520px]" />
+    <app-pen
+      class="block absolute left-[30px] top-[520px]"
+      style="transform-origin: 225px 900px"
+      [style.transform]="'rotate(' + penTilt() + 'deg)'"
+    />
   </div>
 
   <div>

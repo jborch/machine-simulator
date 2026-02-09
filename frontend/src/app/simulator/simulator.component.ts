@@ -34,6 +34,7 @@ const CAP_PATH = `
 const PEN_X = 30;
 const PEN_Y = 520;
 const CANVAS_W = 510;
+const CANVAS_H = PEN_Y + 1800;
 
 @Component({
   selector: 'app-simulator',
@@ -50,6 +51,7 @@ export class SimulatorComponent {
 
   capPercent = signal(0);
   capTranslateY = signal(0);
+  penTilt = signal(0);
   snapped = signal(false);
   overlapPixelCount = signal(0);
   overlapHistory = signal<number[]>([]);
@@ -63,13 +65,10 @@ export class SimulatorComponent {
     this.penPath = new Path2D(PEN_PATH);
     this.capPath = new Path2D(CAP_PATH);
 
-    // Pre-render pen once (it never moves)
-    this.penCanvas = new OffscreenCanvas(CANVAS_W, PEN_Y + 1800);
-    const penCtx = this.penCanvas.getContext('2d')!;
-    penCtx.translate(PEN_X, PEN_Y);
-    penCtx.fill(this.penPath);
+    this.penCanvas = new OffscreenCanvas(CANVAS_W, CANVAS_H);
+    this.capCanvas = new OffscreenCanvas(CANVAS_W, CANVAS_H);
 
-    this.capCanvas = new OffscreenCanvas(CANVAS_W, PEN_Y + 1800);
+    this.renderPenCanvas();
   }
 
   onSliderInput(event: Event) {
@@ -78,6 +77,28 @@ export class SimulatorComponent {
     this.capTranslateY.set((value / 100) * this.SNAP_TRANSLATE_Y);
     this.snapped.set(value === 100);
     this.calculateOverlap();
+  }
+
+  onTiltInput(event: Event) {
+    const value = +(event.target as HTMLInputElement).value;
+    this.penTilt.set(value);
+    this.renderPenCanvas();
+    this.calculateOverlap();
+  }
+
+  private renderPenCanvas() {
+    const ctx = this.penCanvas.getContext('2d')!;
+    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    ctx.save();
+    // Rotate around pen center
+    const cx = PEN_X + 225;
+    const cy = PEN_Y + 900;
+    ctx.translate(cx, cy);
+    ctx.rotate((this.penTilt() * Math.PI) / 180);
+    ctx.translate(-cx, -cy);
+    ctx.translate(PEN_X, PEN_Y);
+    ctx.fill(this.penPath);
+    ctx.restore();
   }
 
   toggle() {
