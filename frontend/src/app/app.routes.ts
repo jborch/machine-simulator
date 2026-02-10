@@ -1,11 +1,11 @@
 import { Routes } from '@angular/router';
 
-import { SimulatorComponent } from './simulator/simulator.component';
+import { OverviewComponent } from './machine/overview/overview.component';
 
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    component: SimulatorComponent,
+    component: OverviewComponent,
   },
 ];
