@@ -18,6 +18,8 @@ export interface SceneState {
   capTranslateY: number;
   capOffsetX: number;
   capOffsetY: number;
+  moverX: number;
+  capAttached: boolean;
 }
 
 const PEN_PATH = `
@@ -138,7 +140,7 @@ export class SceneComponent {
   ) {
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
-    const px = PEN_X + OFFSET_RANGE + state.penOffsetX;
+    const px = PEN_X + OFFSET_RANGE + state.penOffsetX + state.moverX;
     const py = PEN_Y + OFFSET_RANGE + state.penOffsetY;
     const cx = px + 225;
     const cy = py + 900;
@@ -178,7 +180,8 @@ export class SceneComponent {
     // Draw cap
     ctx.save();
     const capAbsY = OFFSET_RANGE + state.capTranslateY + state.capOffsetY;
-    ctx.translate(OFFSET_RANGE + state.capOffsetX, capAbsY);
+    const capMoverX = state.capAttached ? state.moverX : 0;
+    ctx.translate(OFFSET_RANGE + state.capOffsetX + capMoverX, capAbsY);
     ctx.fillStyle = 'red';
     ctx.globalAlpha = CAP_OPACITY;
     ctx.fill(this.capPath);

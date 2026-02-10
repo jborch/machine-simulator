@@ -23,9 +23,13 @@ import {
 export class SimulatorComponent {
   readonly CANVAS_W = CANVAS_W;
   readonly CANVAS_H = CANVAS_H;
-  readonly ANIMATION_DURATION_MS = 700;
-  readonly SNAP_TRANSLATE_Y = 490;
   readonly FRAME_MS = 16;
+
+  readonly SNAP_TRANSLATE_Y = 490;
+  readonly SNAP_DURATION_MS = 700;
+  readonly SLIDE_DURATION_MS = 500;
+  readonly MOVER_ENTRY = -1000;
+  readonly MOVER_EXIT = 1000;
 
   readonly CAP_POSITION_MIN = 0;
   readonly CAP_POSITION_MAX = 100;
@@ -39,6 +43,8 @@ export class SimulatorComponent {
   readonly MOVER_TILT_STEP = 0.01;
   readonly MOVER_NUMBER_MIN = 1;
   readonly MOVER_NUMBER_MAX = 12;
+  readonly MOVER_POSITION_MIN = -1000;
+  readonly MOVER_POSITION_MAX = 1000;
 
   capPercent = signal(0);
   capTranslateY = signal(0);
@@ -49,6 +55,9 @@ export class SimulatorComponent {
   penOffsetY = signal(0);
   capOffsetX = signal(0);
   capOffsetY = signal(0);
+  moverPosition = signal(0);
+  capAttached = signal(false);
+  animating = signal(false);
   snapped = signal(false);
   overlapHistory = signal<number[]>([]);
 
@@ -63,13 +72,17 @@ export class SimulatorComponent {
     capTranslateY: this.capTranslateY(),
     capOffsetX: this.capOffsetX(),
     capOffsetY: this.capOffsetY(),
+    moverX: this.moverPosition(),
+    capAttached: this.capAttached(),
   }));
 
   onSliderInput(event: Event) {
     const value = +(event.target as HTMLInputElement).value;
     this.capPercent.set(value);
     this.capTranslateY.set((value / 100) * this.SNAP_TRANSLATE_Y);
-    this.snapped.set(value === 100);
+    const isSnapped = value === 100;
+    this.snapped.set(isSnapped);
+    this.capAttached.set(isSnapped);
   }
 
   onTiltInput(event: Event) {
@@ -99,34 +112,60 @@ export class SimulatorComponent {
     else this.capOffsetY.set(value);
   }
 
-  toggle() {
-    const isSnapped = this.snapped();
-    const from = isSnapped ? this.SNAP_TRANSLATE_Y : 0;
-    const to = isSnapped ? 0 : this.SNAP_TRANSLATE_Y;
-    const totalFrames = Math.ceil(this.ANIMATION_DURATION_MS / this.FRAME_MS);
-    let frame = 0;
+  onMoverPositionInput(event: Event) {
+    const value = +(event.target as HTMLInputElement).value;
+    this.moverPosition.set(value);
+  }
 
+  async toggle() {
+    if (this.animating()) return;
+
+    if (this.snapped()) {
+      this.moverPosition.set(0);
+      this.capTranslateY.set(0);
+      this.capPercent.set(0);
+      this.capAttached.set(false);
+      this.snapped.set(false);
+      this.overlapHistory.set([]);
+      return;
+    }
+
+    this.animating.set(true);
     this.overlapHistory.set([]);
 
-    const step = () => {
-      frame++;
-      const progress = Math.min(frame / totalFrames, 1);
-      const y = from + (to - from) * progress;
-      this.capTranslateY.set(y);
-      this.capPercent.set(Math.round((y / this.SNAP_TRANSLATE_Y) * 100));
-      this.scene().redraw();
+    // Phase 1: Slide mover+pen in from left
+    await this.animateValue(
+      (v) => this.moverPosition.set(v),
+      this.MOVER_ENTRY,
+      0,
+      this.SLIDE_DURATION_MS,
+    );
 
-      if (!isSnapped) {
-        this.overlapHistory.update((h) => [...h, this.scene().overlapPixelCount()]);
-      }
+    // Phase 2: Snap cap down
+    await this.animateValue(
+      (v) => {
+        this.capTranslateY.set(v);
+        this.capPercent.set(Math.round((v / this.SNAP_TRANSLATE_Y) * 100));
+      },
+      0,
+      this.SNAP_TRANSLATE_Y,
+      this.SNAP_DURATION_MS,
+      true,
+    );
 
-      if (progress < 1) {
-        setTimeout(step, this.FRAME_MS);
-      }
-    };
+    // Cap is now attached to mover
+    this.capAttached.set(true);
 
-    setTimeout(step, this.FRAME_MS);
-    this.snapped.update((v) => !v);
+    // Phase 3: Slide assembly out to right
+    await this.animateValue(
+      (v) => this.moverPosition.set(v),
+      0,
+      this.MOVER_EXIT,
+      this.SLIDE_DURATION_MS,
+    );
+
+    this.snapped.set(true);
+    this.animating.set(false);
   }
 
   downloadPng() {
@@ -139,6 +178,41 @@ export class SimulatorComponent {
       a.download = 'simulator.png';
       a.click();
       URL.revokeObjectURL(url);
+    });
+  }
+
+  private animateValue(
+    setter: (v: number) => void,
+    from: number,
+    to: number,
+    durationMs: number,
+    trackOverlap = false,
+  ): Promise<void> {
+    return new Promise((resolve) => {
+      const totalFrames = Math.ceil(durationMs / this.FRAME_MS);
+      let frame = 0;
+
+      const step = () => {
+        frame++;
+        const progress = Math.min(frame / totalFrames, 1);
+        setter(from + (to - from) * progress);
+        this.scene().redraw();
+
+        if (trackOverlap) {
+          this.overlapHistory.update((h) => [
+            ...h,
+            this.scene().overlapPixelCount(),
+          ]);
+        }
+
+        if (progress < 1) {
+          setTimeout(step, this.FRAME_MS);
+        } else {
+          resolve();
+        }
+      };
+
+      setTimeout(step, this.FRAME_MS);
     });
   }
 }

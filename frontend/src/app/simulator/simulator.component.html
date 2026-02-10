@@ -4,7 +4,7 @@
       (click)="toggle()"
       class="px-4 py-1.5 border border-gray-400 rounded bg-white cursor-pointer hover:bg-gray-100 active:bg-gray-200"
     >
-      {{ snapped() ? 'Reset' : 'Snap Cap' }}
+      {{ snapped() ? 'Reset' : 'Run' }}
     </button>
 
     <button
@@ -54,6 +54,17 @@
       step="1"
       [value]="moverNumber()"
       (input)="onMoverNumberInput($event)"
+      class="w-full mt-1"
+    />
+
+    <label class="mt-4 block text-sm">Mover pos: {{ moverPosition() }}px</label>
+    <input
+      type="range"
+      [min]="MOVER_POSITION_MIN"
+      [max]="MOVER_POSITION_MAX"
+      step="10"
+      [value]="moverPosition()"
+      (input)="onMoverPositionInput($event)"
       class="w-full mt-1"
     />
 
