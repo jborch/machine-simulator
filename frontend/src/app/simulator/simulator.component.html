@@ -98,18 +98,11 @@
     />
   </div>
 
-  <canvas
-    #display
-    [width]="CANVAS_W"
-    [height]="CANVAS_H"
-    class="border border-dashed border-gray-400"
-    [style.width.px]="CANVAS_W * VISUAL_SCALE"
-    [style.height.px]="CANVAS_H * VISUAL_SCALE"
-  ></canvas>
+  <app-scene [state]="sceneState()" />
 
   <div>
     <div class="text-sm font-semibold">Overlap</div>
-    <div class="text-2xl">{{ overlapPixelCount() }}</div>
+    <div class="text-2xl">{{ scene().overlapPixelCount() }}</div>
     <div class="text-xs text-gray-500 mb-4">pixels</div>
     <app-overlap-graph [dataPoints]="overlapHistory()" />
   </div>
