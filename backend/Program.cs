@@ -1,9 +1,15 @@
-namespace MachineSimulator.Backend;
+using MachineSimulator.Backend.Models;
+using MachineSimulator.Backend.Services;
+using MachineSimulator.Backend.Stations;
 
-class Program
-{
-    static void Main(string[] args)
-    {
-        Console.WriteLine("Hello, Machine Simulator!");
-    }
-}
+var simulator = new Simulator();
+
+simulator.AddStation(new LoadingStation());
+simulator.AddStation(new AssemblyStation());
+simulator.AddStation(new InspectionStation());
+simulator.AddStation(new UnloadingStation());
+
+simulator.AddCarrier(new Mover("mover-1"));
+simulator.AddCarrier(new Nest("nest-1"));
+
+simulator.Run();
