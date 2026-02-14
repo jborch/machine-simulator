@@ -11,6 +11,8 @@ public class CartonOutfeed : IMachine
         _itemCount++;
     }
 
+    public void Reset() => _itemCount = 0;
+
     public void Tick() { }
 
     public object GetState() => new { ItemsReceived = _itemCount };

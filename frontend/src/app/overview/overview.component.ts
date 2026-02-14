@@ -7,6 +7,7 @@ import {
   ProcessingDetails,
   InfeedDetails,
   OutfeedDetails,
+  BufferDetails,
 } from '../state.service';
 import { ConveyorComponent } from './conveyor.component';
 import { StationComponent } from './station.component';
@@ -22,10 +23,11 @@ export class OverviewComponent {
   private stateService = inject(StateService);
 
   state = this.stateService.state;
-  isRunning = computed(() => this.state()?.isRunning ?? false);
+  connected = this.stateService.connected;
+  isRunning = computed(() => this.state().isRunning);
 
   private machine = (name: string) =>
-    this.state()?.machines.find((m) => m.name === name);
+    this.state().machines.find((m) => m.name === name);
 
   nestInfeed = computed(() => this.machine('NestInfeed')?.details as InfeedDetails | undefined);
   cartonOutfeed = computed(() => this.machine('CartonOutfeed')?.details as OutfeedDetails | undefined);
@@ -41,7 +43,7 @@ export class OverviewComponent {
 
   capping = computed(() => this.machine('Capping')?.details as StationDetails | undefined);
   reject = computed(() => this.machine('Reject')?.details as StationDetails | undefined);
-  buffer = computed(() => this.machine('Buffer')?.details as StationDetails | undefined);
+  buffer = computed(() => this.machine('Buffer')?.details as BufferDetails | undefined);
 
   onRun(): void {
     this.stateService.sendCommand('start');
@@ -49,5 +51,9 @@ export class OverviewComponent {
 
   onStop(): void {
     this.stateService.sendCommand('stop');
+  }
+
+  onReset(): void {
+    this.stateService.sendCommand('reset');
   }
 }

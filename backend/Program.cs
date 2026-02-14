@@ -29,7 +29,7 @@ app.Map("/ws", async context =>
         var buffer = new byte[1024];
         while (socket.State == WebSocketState.Open)
         {
-            var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), context.RequestAborted);
             if (result.MessageType == WebSocketMessageType.Close)
             {
                 await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
@@ -49,6 +49,9 @@ app.Map("/ws", async context =>
                         case "stop":
                             simulator.Stop();
                             break;
+                        case "reset":
+                            simulator.Reset();
+                            break;
                     }
                 }
                 catch (Exception)
@@ -64,6 +67,11 @@ app.Map("/ws", async context =>
     }
 });
 
-_ = Task.Run(() => simulator.Run(idle));
+var cts = new CancellationTokenSource();
+var simulatorTask = Task.Run(() => simulator.Run(idle, cts.Token));
+
+var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+lifetime.ApplicationStopping.Register(() => cts.Cancel());
 
 app.Run();
+await simulatorTask;

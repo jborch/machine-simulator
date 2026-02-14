@@ -17,6 +17,13 @@ public class UnloadingMachine
         _outfeed = outfeed;
     }
 
+    public void Reset()
+    {
+        _currentMover = null;
+        _ticksRemaining = 0;
+        State = "Idle";
+    }
+
     public void Receive(IMover mover)
     {
         if (_currentMover != null)

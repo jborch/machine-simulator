@@ -8,7 +8,8 @@ public class BufferStation : IMachine
 
     private readonly Conveyor _input;
     private readonly Conveyor _output;
-    private IMover? _mover;
+    private readonly Queue<IMover> _queue = new();
+    private int _ticksSinceLastOutput;
 
     public BufferStation(Conveyor input, Conveyor output)
     {
@@ -16,17 +17,33 @@ public class BufferStation : IMachine
         _output = output;
     }
 
-    public void Tick()
+    public void Reset()
     {
-        if (_mover != null && _output.Input == null)
-        {
-            _output.Input = _mover;
-            _mover = null;
-        }
-
-        if (_mover == null && _input.Output != null)
-            _mover = _input.TakeOutput();
+        _queue.Clear();
+        _ticksSinceLastOutput = 0;
     }
 
-    public object GetState() => new { Mover = _mover?.GetState() };
+    public void Initialize()
+    {
+        for (int i = 0; i < 12; i++)
+            _queue.Enqueue(new Mover($"mover-{i + 1}"));
+    }
+
+    public void Tick()
+    {
+        _ticksSinceLastOutput++;
+
+        // Accept from input conveyor
+        if (_input.Output != null)
+            _queue.Enqueue(_input.TakeOutput()!);
+
+        // Release one to output conveyor at most every 10 ticks
+        if (_queue.Count > 0 && _output.Input == null && _ticksSinceLastOutput >= 10)
+        {
+            _output.Input = _queue.Dequeue();
+            _ticksSinceLastOutput = 0;
+        }
+    }
+
+    public object GetState() => new { QueueLength = _queue.Count };
 }

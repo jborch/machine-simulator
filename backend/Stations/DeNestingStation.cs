@@ -17,6 +17,8 @@ public class DeNestingStation : IMachine
         _machine = new LoadingMachine(infeed);
     }
 
+    public void Reset() => _machine.Reset();
+
     public void Tick()
     {
         _machine.Tick();

@@ -10,6 +10,7 @@ public class Simulator
     private readonly ILogger<Simulator> _logger;
     private readonly WebSocketServer _webSocketServer;
     private bool _running;
+    private bool _resetRequested;
 
     public SimulatorState? CurrentState { get; private set; }
 
@@ -27,9 +28,6 @@ public class Simulator
         var nestInfeed = new NestInfeed();
         var cartonOutfeed = new CartonOutfeed();
 
-        for (int i = 0; i < 12; i++)
-            conveyorDN.PlaceAt(i * 8, new Mover($"mover-{i + 1}"));
-
         _machines =
         [
             nestInfeed,
@@ -45,45 +43,49 @@ public class Simulator
             new BufferStation(conveyorPB, conveyorDN),
             cartonOutfeed,
         ];
-    }
 
-    public void Tick()
-    {
         foreach (var machine in _machines)
-            machine.Tick();
-
-        CurrentState = GetState();
-        _ = _webSocketServer.BroadcastAsync(CurrentState);
+            machine.Initialize();
     }
 
     public void Start() => _running = true;
     public void Stop() => _running = false;
+    public void Reset() => _resetRequested = true;
 
-    public SimulatorState GetState()
-    {
-        return new SimulatorState(
-            _running,
-            _machines.Select(m => new MachineState(m.Name, m.GetState())).ToList()
-        );
-    }
-
-    public async Task Run(bool idle = false)
+    public async Task Run(bool idle, CancellationToken ct)
     {
         _running = !idle;
         _logger.LogInformation("Simulator running with {MachineCount} machines (idle={Idle}).", _machines.Length, idle);
 
-        while (true)
+        try
         {
-            if (_running)
+            while (!ct.IsCancellationRequested)
             {
-                Tick();
-            }
-            else
-            {
-                CurrentState = GetState();
+                if (_resetRequested)
+                {
+                    _resetRequested = false;
+                    _running = false;
+                    foreach (var machine in _machines)
+                        machine.Reset();
+                    foreach (var machine in _machines)
+                        machine.Initialize();
+                }
+
+                if (_running)
+                {
+                    foreach (var machine in _machines)
+                        machine.Tick();
+                }
+
+                CurrentState = new SimulatorState(
+                    _running,
+                    _machines.Select(m => new MachineState(m.Name, m.GetState())).ToList()
+                );
                 await _webSocketServer.BroadcastAsync(CurrentState);
+
+                await Task.Delay(100, ct);
             }
-            await Task.Delay(100);
         }
+        catch (OperationCanceledException) { }
     }
 }

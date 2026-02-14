@@ -35,6 +35,11 @@ public class Conveyor : IMachine
         _slots[slot] = mover;
     }
 
+    public void Reset()
+    {
+        Array.Clear(_slots);
+    }
+
     public void Tick()
     {
         for (int i = SlotCount - 1; i > 0; i--)
@@ -47,5 +52,9 @@ public class Conveyor : IMachine
         }
     }
 
-    public object GetState() => new ConveyorState(_slots.Select(s => s?.GetState()).ToArray());
+    public object GetState() => new ConveyorState(
+        _slots.Select((s, i) => (s, i))
+              .Where(x => x.s != null)
+              .ToDictionary(x => x.i, x => x.s!.GetState())
+    );
 }

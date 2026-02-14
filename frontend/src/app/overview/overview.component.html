@@ -1,60 +1,110 @@
-<div class="flex gap-2 mb-4">
-  <button data-testid="run-btn" class="rounded border border-gray-300 bg-white px-4 py-1.5 text-sm disabled:opacity-50 disabled:cursor-default cursor-pointer" [disabled]="isRunning()" (click)="onRun()">Run</button>
-  <button data-testid="stop-btn" class="rounded border border-gray-300 bg-white px-4 py-1.5 text-sm disabled:opacity-50 disabled:cursor-default cursor-pointer" [disabled]="!isRunning()" (click)="onStop()">Stop</button>
+<div class="flex gap-2 mb-4 items-center">
+  <button
+    data-testid="run-btn"
+    class="rounded border border-gray-300 bg-white px-4 py-1.5 text-sm disabled:opacity-50 disabled:cursor-default cursor-pointer"
+    [disabled]="isRunning() || !connected()"
+    (click)="onRun()"
+  >
+    Run
+  </button>
+  <button
+    data-testid="stop-btn"
+    class="rounded border border-gray-300 bg-white px-4 py-1.5 text-sm disabled:opacity-50 disabled:cursor-default cursor-pointer"
+    [disabled]="!isRunning() || !connected()"
+    (click)="onStop()"
+  >
+    Stop
+  </button>
+  <button
+    data-testid="reset-btn"
+    class="rounded border border-gray-300 bg-white px-4 py-1.5 text-sm disabled:opacity-50 disabled:cursor-default cursor-pointer"
+    [disabled]="!connected()"
+    (click)="onReset()"
+  >
+    Reset
+  </button>
+  <span class="flex items-center gap-1.5 text-xs text-gray-500 ml-2">
+    <span
+      class="inline-block w-2 h-2 rounded-full"
+      [class.bg-green-500]="connected()"
+      [class.bg-red-400]="!connected()"
+    ></span>
+    {{ connected() ? 'Connected' : 'Disconnected' }}
+  </span>
 </div>
 
-@if (state(); as s) {
-  <div class="grid grid-cols-[auto_1fr_auto] grid-rows-[auto_1fr_auto] gap-2 max-w-[900px]" data-testid="machine-loop">
-    <!-- Top row: left to right -->
-    <div class="col-span-3 row-start-1 flex items-center gap-2">
-      @if (nestInfeed(); as d) {
-        <app-info-panel name="NestInfeed" [value]="d.pensDispensed" caption="pens dispensed" />
-      }
-      @if (bufferDeNesting(); as d) {
-        <app-conveyor [slots]="d.slots" orientation="horizontal" direction="forward" />
-      }
-      @if (deNesting(); as d) {
-        <app-processing-station name="DeNesting" [details]="d" />
-      }
-      @if (deNestingCapping(); as d) {
-        <app-conveyor [slots]="d.slots" orientation="horizontal" direction="forward" />
-      }
-    </div>
-
-    <!-- Right column: top to bottom -->
-    <div class="col-start-3 row-start-2 flex flex-col items-center gap-2">
-      @if (capping(); as d) {
-        <app-station name="Capping" [mover]="d.mover" />
-      }
-      @if (cappingReject(); as d) {
-        <app-conveyor [slots]="d.slots" orientation="vertical" direction="forward" />
-      }
-      @if (reject(); as d) {
-        <app-station name="Reject" [mover]="d.mover" />
-      }
-      @if (rejectPacking(); as d) {
-        <app-conveyor [slots]="d.slots" orientation="vertical" direction="forward" />
-      }
-    </div>
-
-    <!-- Bottom row: right to left -->
-    <div class="col-span-3 row-start-3 flex flex-row-reverse items-center gap-2">
-      @if (packing(); as d) {
-        <app-processing-station name="Packing" [details]="d" />
-      }
-      @if (packingBuffer(); as d) {
-        <app-conveyor [slots]="d.slots" orientation="horizontal" direction="reverse" />
-      }
-      @if (cartonOutfeed(); as d) {
-        <app-info-panel name="CartonOutfeed" [value]="d.itemsReceived" caption="items received" />
-      }
-    </div>
-
-    <!-- Left column: bottom to top -->
-    <div class="col-start-1 row-start-2 flex flex-col-reverse items-center gap-2">
-      @if (buffer(); as d) {
-        <app-station name="Buffer" [mover]="d.mover" />
-      }
-    </div>
+<div
+  class="grid grid-cols-[auto_1fr_auto] grid-rows-[auto_1fr_auto] gap-0 max-w-[900px]"
+  data-testid="machine-loop"
+>
+  <!-- Top-left: Buffer -->
+  <div class="col-start-1 row-start-1 flex flex-col items-center p-1">
+    @if (buffer(); as d) {
+      <div class="flex flex-col items-center rounded-md border-2 border-gray-500 bg-gray-50 p-2 min-w-20">
+        <span class="text-xs font-semibold mb-1">Buffer</span>
+        <div class="flex flex-wrap gap-0.5 justify-center">
+          @for (i of [].constructor(d.queueLength); track $index) {
+            <div class="size-3 rounded-full bg-gray-400"></div>
+          }
+        </div>
+      </div>
+    }
   </div>
-}
+
+  <!-- Top edge: Buffer-DeNesting conveyor -->
+  <div class="col-start-2 row-start-1 flex items-center p-1">
+    @if (bufferDeNesting(); as d) {
+      <app-conveyor [slots]="d.slots" orientation="horizontal" direction="forward" />
+    }
+  </div>
+
+  <!-- Top-right: DeNesting + NestInfeed -->
+  <div class="col-start-3 row-start-1 flex items-end gap-2 p-1">
+    @if (deNesting(); as d) {
+      <app-processing-station name="DeNesting" [details]="d" />
+    }
+    @if (nestInfeed(); as d) {
+      <app-info-panel name="NestInfeed" [value]="d.pensDispensed" caption="pens dispensed" />
+    }
+  </div>
+
+  <!-- Left edge: Packing-Buffer conveyor -->
+  <div class="col-start-1 row-start-2 flex flex-col-reverse items-center p-1">
+    @if (packingBuffer(); as d) {
+      <app-conveyor [slots]="d.slots" orientation="vertical" direction="reverse" />
+    }
+  </div>
+
+  <!-- Right edge: DeNesting-Capping, Capping, Capping-Reject, Reject -->
+  <div class="col-start-3 row-start-2 row-span-2 flex flex-col items-start gap-1 p-1">
+    @if (deNestingCapping(); as d) {
+      <app-conveyor [slots]="d.slots" orientation="vertical" direction="forward" />
+    }
+    @if (capping(); as d) {
+      <app-station name="Capping" [mover]="d.mover" />
+    }
+    @if (cappingReject(); as d) {
+      <app-conveyor [slots]="d.slots" orientation="vertical" direction="forward" />
+    }
+    @if (reject(); as d) {
+      <app-station name="Reject" [mover]="d.mover" />
+    }
+  </div>
+
+  <!-- Bottom-left: Packing + CartonOutfeed -->
+  <div class="col-start-1 row-start-3 flex items-start gap-2 p-1">
+    @if (cartonOutfeed(); as d) {
+      <app-info-panel name="CartonOutfeed" [value]="d.itemsReceived" caption="items received" />
+    }
+    @if (packing(); as d) {
+      <app-processing-station name="Packing" [details]="d" />
+    }
+  </div>
+
+  <!-- Bottom edge: Reject-Packing conveyor -->
+  <div class="col-start-2 row-start-3 flex items-center p-1">
+    @if (rejectPacking(); as d) {
+      <app-conveyor [slots]="d.slots" orientation="horizontal" direction="reverse" />
+    }
+  </div>
+</div>

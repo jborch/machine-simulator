@@ -16,6 +16,8 @@ public class RejectStation : IMachine
         _output = output;
     }
 
+    public void Reset() => _mover = null;
+
     public void Tick()
     {
         if (_mover != null && _output.Input == null)

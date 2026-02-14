@@ -12,6 +12,8 @@ public class NestInfeed : IMachine
         return new Pen($"pen-{_penCounter}");
     }
 
+    public void Reset() => _penCounter = 0;
+
     public void Tick() { }
 
     public object GetState() => new { PensDispensed = _penCounter };

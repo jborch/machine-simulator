@@ -17,6 +17,8 @@ public class PackingStation : IMachine
         _machine = new UnloadingMachine(outfeed);
     }
 
+    public void Reset() => _machine.Reset();
+
     public void Tick()
     {
         _machine.Tick();

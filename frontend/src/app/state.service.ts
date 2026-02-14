@@ -17,7 +17,7 @@ export interface SimulatorState {
 }
 
 export interface ConveyorDetails {
-  slots: (MoverState | null)[];
+  slots: Record<number, MoverState>;
 }
 
 export interface StationDetails {
@@ -38,9 +38,37 @@ export interface OutfeedDetails {
   itemsReceived: number;
 }
 
+export interface BufferDetails {
+  queueLength: number;
+}
+
+function defaultState(): SimulatorState {
+  const conveyor = (): ConveyorDetails => ({ slots: {} });
+  const station = (): StationDetails => ({ mover: null });
+  const processing = (): ProcessingDetails => ({ state: 'Idle', mover: null, ticksRemaining: 0 });
+
+  return {
+    isRunning: false,
+    machines: [
+      { name: 'NestInfeed', details: { pensDispensed: 0 } as InfeedDetails },
+      { name: 'Buffer-DeNesting', details: conveyor() },
+      { name: 'DeNesting', details: processing() },
+      { name: 'DeNesting-Capping', details: conveyor() },
+      { name: 'Capping', details: station() },
+      { name: 'Capping-Reject', details: conveyor() },
+      { name: 'Reject', details: station() },
+      { name: 'Reject-Packing', details: conveyor() },
+      { name: 'Packing', details: processing() },
+      { name: 'Packing-Buffer', details: conveyor() },
+      { name: 'Buffer', details: { queueLength: 0 } as BufferDetails },
+      { name: 'CartonOutfeed', details: { itemsReceived: 0 } as OutfeedDetails },
+    ],
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class StateService {
-  readonly state = signal<SimulatorState | null>(null);
+  readonly state = signal<SimulatorState>(defaultState());
   readonly connected = signal(false);
 
   private ws: WebSocket | null = null;
