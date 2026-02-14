@@ -8,12 +8,14 @@ public class Simulator
 {
     private readonly List<IStation> _stations = new();
     private readonly ILogger<Simulator> _logger;
+    private readonly WebSocketServer _webSocketServer;
 
     public SimulatorState? CurrentState { get; private set; }
 
-    public Simulator(ILoggerFactory loggerFactory)
+    public Simulator(ILoggerFactory loggerFactory, WebSocketServer webSocketServer)
     {
         _logger = loggerFactory.CreateLogger<Simulator>();
+        _webSocketServer = webSocketServer;
         _stations.Add(new DeNestingStation(loggerFactory));
         _stations.Add(new CappingStation(loggerFactory));
         _stations.Add(new RejectStation(loggerFactory));
@@ -47,6 +49,7 @@ public class Simulator
         }
 
         CurrentState = GetState();
+        _ = _webSocketServer.BroadcastAsync(CurrentState);
     }
 
     public SimulatorState GetState()
