@@ -6,6 +6,7 @@ import {
   InfeedDetails,
   OutfeedDetails,
   BufferDetails,
+  RejectBinDetails,
 } from '../state.service';
 import { ConveyorComponent } from './conveyor.component';
 import { ProcessingStationComponent } from './processing-station.component';
@@ -40,6 +41,7 @@ export class OverviewComponent {
 
   capping = computed(() => this.machine('Capping')?.details as ProcessingDetails | undefined);
   reject = computed(() => this.machine('Reject')?.details as ProcessingDetails | undefined);
+  rejectBin = computed(() => this.machine('RejectBin')?.details as RejectBinDetails | undefined);
   buffer = computed(() => this.machine('Buffer')?.details as BufferDetails | undefined);
 
   onRun(): void {

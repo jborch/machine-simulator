@@ -105,6 +105,9 @@
     @if (reject(); as d) {
       <app-processing-station name="Reject" [details]="d" />
     }
+    @if (rejectBin(); as d) {
+      <app-info-panel name="RejectBin" [value]="d.itemsRejected" caption="items rejected" />
+    }
   </div>
 
   <!-- Bottom-left: Packing + CartonOutfeed -->

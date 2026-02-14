@@ -11,10 +11,13 @@ public class ProcessingMachine
     public bool CanReceive => _currentMover == null;
     public bool HasOutput => State == "Done";
 
-    public ProcessingMachine(int processingTicks, string processingState = "Processing")
+    private readonly Action<IMover>? _onComplete;
+
+    public ProcessingMachine(int processingTicks, string processingState = "Processing", Action<IMover>? onComplete = null)
     {
         _processingTicks = processingTicks;
         _processingState = processingState;
+        _onComplete = onComplete;
     }
 
     public void Reset()
@@ -53,7 +56,10 @@ public class ProcessingMachine
         _ticksRemaining--;
 
         if (_ticksRemaining <= 0)
+        {
+            _onComplete?.Invoke(_currentMover!);
             State = "Done";
+        }
     }
 
     public object GetState() => new

@@ -44,6 +44,10 @@ export interface BufferDetails {
   queueLength: number;
 }
 
+export interface RejectBinDetails {
+  itemsRejected: number;
+}
+
 function defaultState(): SimulatorState {
   const conveyor = (): ConveyorDetails => ({ slotCount: 0, slots: {} });
   const processing = (): ProcessingDetails => ({ state: 'Idle', mover: null, ticksRemaining: 0, totalTicks: 0 });
@@ -63,6 +67,7 @@ function defaultState(): SimulatorState {
       { name: 'Packing-Buffer', details: conveyor() },
       { name: 'Buffer', details: { queueLength: 0 } as BufferDetails },
       { name: 'CartonOutfeed', details: { itemsReceived: 0 } as OutfeedDetails },
+      { name: 'RejectBin', details: { itemsRejected: 0 } as RejectBinDetails },
     ],
   };
 }

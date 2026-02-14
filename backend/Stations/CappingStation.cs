@@ -6,14 +6,23 @@ public class CappingStation : IMachine
 {
     public string Name => "Capping";
 
+    private static readonly Random _random = new();
+
     private readonly Conveyor _input;
     private readonly Conveyor _output;
-    private readonly ProcessingMachine _machine = new(105, "Capping");
+    private readonly ProcessingMachine _machine;
+
+    private static void Inspect(IMover mover)
+    {
+        if (mover.CurrentItem is Pen pen)
+            pen.InspectionResult = _random.Next(100) < 5 ? 2 : 1;
+    }
 
     public CappingStation(Conveyor input, Conveyor output)
     {
         _input = input;
         _output = output;
+        _machine = new ProcessingMachine(105, "Capping", Inspect);
     }
 
     public void Reset() => _machine.Reset();

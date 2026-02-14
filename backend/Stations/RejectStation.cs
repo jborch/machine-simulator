@@ -8,12 +8,14 @@ public class RejectStation : IMachine
 
     private readonly Conveyor _input;
     private readonly Conveyor _output;
+    private readonly RejectBin _rejectBin;
     private readonly ProcessingMachine _machine = new(100, "Inspecting");
 
-    public RejectStation(Conveyor input, Conveyor output)
+    public RejectStation(Conveyor input, Conveyor output, RejectBin rejectBin)
     {
         _input = input;
         _output = output;
+        _rejectBin = rejectBin;
     }
 
     public void Reset() => _machine.Reset();
@@ -23,7 +25,18 @@ public class RejectStation : IMachine
         _machine.Tick();
 
         if (_machine.HasOutput && _output.Input == null)
-            _output.Input = _machine.Release();
+        {
+            var mover = _machine.Release()!;
+            var pen = mover.CurrentItem as Pen;
+
+            if (pen?.InspectionResult == 2)
+            {
+                ((ICarrier)mover).Unload();
+                _rejectBin.AcceptItem(pen);
+            }
+
+            _output.Input = mover;
+        }
 
         if (_input.Output != null && _machine.CanReceive)
             _machine.Receive(_input.TakeOutput()!);

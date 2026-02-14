@@ -28,6 +28,7 @@ public class Simulator
 
         var nestInfeed = new NestInfeed();
         var cartonOutfeed = new CartonOutfeed();
+        var rejectBin = new RejectBin();
 
         // Stations tick before conveyors so they only see movers
         // that reached the conveyor output on a previous tick.
@@ -36,10 +37,11 @@ public class Simulator
             nestInfeed,
             new DeNestingStation(conveyorDN, conveyorDC, nestInfeed),
             new CappingStation(conveyorDC, conveyorCR),
-            new RejectStation(conveyorCR, conveyorRP),
+            new RejectStation(conveyorCR, conveyorRP, rejectBin),
             new PackingStation(conveyorRP, conveyorPB, cartonOutfeed),
             new BufferStation(conveyorPB, conveyorDN),
             cartonOutfeed,
+            rejectBin,
             conveyorDN,
             conveyorDC,
             conveyorCR,
