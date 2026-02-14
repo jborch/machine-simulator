@@ -6,8 +6,6 @@ public class Conveyor : IMachine
 
     public string Name { get; }
     public int SlotCount => _slots.Length;
-    public bool CanReceive => _slots[0] == null;
-    public bool HasOutput => _slots[SlotCount - 1] != null;
 
     public IMover? Input
     {
@@ -23,21 +21,12 @@ public class Conveyor : IMachine
         _slots = new IMover?[slotCount];
     }
 
-    public void Receive(IMover mover)
-    {
-        if (_slots[0] != null)
-            throw new InvalidOperationException($"[{Name}] Input slot is occupied.");
-        _slots[0] = mover;
-    }
-
-    public IMover? Send()
+    public IMover? TakeOutput()
     {
         var mover = _slots[SlotCount - 1];
         _slots[SlotCount - 1] = null;
         return mover;
     }
-
-    public IMover? TakeOutput() => Send();
 
     public void PlaceAt(int slot, IMover mover)
     {

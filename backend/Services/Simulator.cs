@@ -18,24 +18,27 @@ public class Simulator
         _logger = loggerFactory.CreateLogger<Simulator>();
         _webSocketServer = webSocketServer;
 
-        var seedConveyor = new Conveyor("Buffer-DeNesting", 100);
+        var conveyorDN = new Conveyor("Buffer-DeNesting", 100);
+        var conveyorDC = new Conveyor("DeNesting-Capping", 100);
+        var conveyorCR = new Conveyor("Capping-Reject", 100);
+        var conveyorRP = new Conveyor("Reject-Packing", 100);
+        var conveyorPB = new Conveyor("Packing-Buffer", 100);
+
         for (int i = 0; i < 12; i++)
-        {
-            seedConveyor.PlaceAt(i * 8, new Mover($"mover-{i + 1}"));
-        }
+            conveyorDN.PlaceAt(i * 8, new Mover($"mover-{i + 1}"));
 
         _machines =
         [
-            seedConveyor,
-            new DeNestingStation(),
-            new Conveyor("DeNesting-Capping", 100),
-            new CappingStation(),
-            new Conveyor("Capping-Reject", 100),
-            new RejectStation(),
-            new Conveyor("Reject-Packing", 100),
-            new PackingStation(),
-            new Conveyor("Packing-Buffer", 100),
-            new BufferStation(),
+            conveyorDN,
+            new DeNestingStation(conveyorDN, conveyorDC),
+            conveyorDC,
+            new CappingStation(conveyorDC, conveyorCR),
+            conveyorCR,
+            new RejectStation(conveyorCR, conveyorRP),
+            conveyorRP,
+            new PackingStation(conveyorRP, conveyorPB),
+            conveyorPB,
+            new BufferStation(conveyorPB, conveyorDN),
         ];
     }
 
@@ -43,22 +46,6 @@ public class Simulator
     {
         foreach (var machine in _machines)
             machine.Tick();
-
-        for (int i = 0; i < _machines.Length; i++)
-        {
-            var current = _machines[i];
-            var next = _machines[(i + 1) % _machines.Length];
-
-            if (current.HasOutput && next.CanReceive)
-            {
-                var mover = current.Send();
-                if (mover != null)
-                {
-                    next.Receive(mover);
-                    _logger.LogDebug("Moved {MoverId} from {Source} to {Destination}", mover.Id, current.Name, next.Name);
-                }
-            }
-        }
 
         CurrentState = GetState();
         _ = _webSocketServer.BroadcastAsync(CurrentState);

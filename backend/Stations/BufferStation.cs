@@ -5,13 +5,28 @@ namespace MachineSimulator.Backend.Stations;
 public class BufferStation : IMachine
 {
     public string Name => "Buffer";
-    public bool HasOutput => _mover != null;
-    public bool CanReceive => _mover == null;
 
+    private readonly Conveyor _input;
+    private readonly Conveyor _output;
     private IMover? _mover;
 
-    public IMover? Send() { var m = _mover; _mover = null; return m; }
-    public void Receive(IMover mover) => _mover = mover;
-    public void Tick() { }
+    public BufferStation(Conveyor input, Conveyor output)
+    {
+        _input = input;
+        _output = output;
+    }
+
+    public void Tick()
+    {
+        if (_mover != null && _output.Input == null)
+        {
+            _output.Input = _mover;
+            _mover = null;
+        }
+
+        if (_mover == null && _input.Output != null)
+            _mover = _input.TakeOutput();
+    }
+
     public object GetState() => new { Mover = _mover?.GetState() };
 }
