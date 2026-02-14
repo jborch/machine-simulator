@@ -1,8 +1,41 @@
 import { Injectable, NgZone, signal } from '@angular/core';
 
+export interface MoverState {
+  id: string;
+  itemId: string | null;
+  itemName: string | null;
+}
+
+export interface MachineState {
+  name: string;
+  details: unknown;
+}
+
 export interface SimulatorState {
   isRunning: boolean;
-  stations: unknown[];
+  machines: MachineState[];
+}
+
+export interface ConveyorDetails {
+  slots: (MoverState | null)[];
+}
+
+export interface StationDetails {
+  mover: MoverState | null;
+}
+
+export interface ProcessingDetails {
+  state: string;
+  mover: MoverState | null;
+  ticksRemaining: number;
+}
+
+export interface InfeedDetails {
+  pensDispensed: number;
+}
+
+export interface OutfeedDetails {
+  itemsReceived: number;
 }
 
 @Injectable({ providedIn: 'root' })

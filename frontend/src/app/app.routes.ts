@@ -1,16 +1,11 @@
 import { Routes } from '@angular/router';
 
-import { OverviewComponent } from './machine/overview/overview.component';
-import { StationComponent } from './machine/station/station.component';
+import { OverviewComponent } from './overview/overview.component';
 
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
     component: OverviewComponent,
-  },
-  {
-    path: 'station/:id',
-    component: StationComponent,
   },
 ];

@@ -1,0 +1,60 @@
+<div class="flex gap-2 mb-4">
+  <button data-testid="run-btn" class="rounded border border-gray-300 bg-white px-4 py-1.5 text-sm disabled:opacity-50 disabled:cursor-default cursor-pointer" [disabled]="isRunning()" (click)="onRun()">Run</button>
+  <button data-testid="stop-btn" class="rounded border border-gray-300 bg-white px-4 py-1.5 text-sm disabled:opacity-50 disabled:cursor-default cursor-pointer" [disabled]="!isRunning()" (click)="onStop()">Stop</button>
+</div>
+
+@if (state(); as s) {
+  <div class="grid grid-cols-[auto_1fr_auto] grid-rows-[auto_1fr_auto] gap-2 max-w-[900px]" data-testid="machine-loop">
+    <!-- Top row: left to right -->
+    <div class="col-span-3 row-start-1 flex items-center gap-2">
+      @if (nestInfeed(); as d) {
+        <app-info-panel name="NestInfeed" [value]="d.pensDispensed" caption="pens dispensed" />
+      }
+      @if (bufferDeNesting(); as d) {
+        <app-conveyor [slots]="d.slots" orientation="horizontal" direction="forward" />
+      }
+      @if (deNesting(); as d) {
+        <app-processing-station name="DeNesting" [details]="d" />
+      }
+      @if (deNestingCapping(); as d) {
+        <app-conveyor [slots]="d.slots" orientation="horizontal" direction="forward" />
+      }
+    </div>
+
+    <!-- Right column: top to bottom -->
+    <div class="col-start-3 row-start-2 flex flex-col items-center gap-2">
+      @if (capping(); as d) {
+        <app-station name="Capping" [mover]="d.mover" />
+      }
+      @if (cappingReject(); as d) {
+        <app-conveyor [slots]="d.slots" orientation="vertical" direction="forward" />
+      }
+      @if (reject(); as d) {
+        <app-station name="Reject" [mover]="d.mover" />
+      }
+      @if (rejectPacking(); as d) {
+        <app-conveyor [slots]="d.slots" orientation="vertical" direction="forward" />
+      }
+    </div>
+
+    <!-- Bottom row: right to left -->
+    <div class="col-span-3 row-start-3 flex flex-row-reverse items-center gap-2">
+      @if (packing(); as d) {
+        <app-processing-station name="Packing" [details]="d" />
+      }
+      @if (packingBuffer(); as d) {
+        <app-conveyor [slots]="d.slots" orientation="horizontal" direction="reverse" />
+      }
+      @if (cartonOutfeed(); as d) {
+        <app-info-panel name="CartonOutfeed" [value]="d.itemsReceived" caption="items received" />
+      }
+    </div>
+
+    <!-- Left column: bottom to top -->
+    <div class="col-start-1 row-start-2 flex flex-col-reverse items-center gap-2">
+      @if (buffer(); as d) {
+        <app-station name="Buffer" [mover]="d.mover" />
+      }
+    </div>
+  </div>
+}
