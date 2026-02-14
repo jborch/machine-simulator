@@ -1,15 +1,14 @@
-using MachineSimulator.Backend.Models;
+using Microsoft.Extensions.Logging;
 using MachineSimulator.Backend.Services;
-using MachineSimulator.Backend.Stations;
 
-var simulator = new Simulator();
+var verbose = args.Contains("--verbose");
 
-simulator.AddStation(new LoadingStation());
-simulator.AddStation(new AssemblyStation());
-simulator.AddStation(new InspectionStation());
-simulator.AddStation(new UnloadingStation());
+using var loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder
+        .SetMinimumLevel(verbose ? LogLevel.Debug : LogLevel.Information)
+        .AddConsole();
+});
 
-simulator.AddCarrier(new Mover("mover-1"));
-simulator.AddCarrier(new Nest("nest-1"));
-
-simulator.Run();
+var simulator = new Simulator(loggerFactory);
+await simulator.Run();

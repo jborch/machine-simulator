@@ -1,6 +1,6 @@
 namespace MachineSimulator.Backend.Models;
 
-public class Mover : ICarrier
+public class Mover : IMover, ICarrier
 {
     public string Id { get; }
     public IItem? CurrentItem { get; private set; }
