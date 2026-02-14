@@ -19,4 +19,6 @@ public class Mover : IMover, ICarrier
     {
         CurrentItem = null;
     }
+
+    public MoverState GetState() => new(Id, CurrentItem?.Id);
 }

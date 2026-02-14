@@ -36,4 +36,6 @@ public class RejectStation : IStation
     {
         Conveyor.Tick();
     }
+
+    public StationState GetState() => new(Name, State, new { Conveyor = Conveyor.GetState() });
 }

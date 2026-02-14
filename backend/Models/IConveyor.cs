@@ -7,4 +7,5 @@ public interface IConveyor
     IMover? Output { get; }
     IMover? TakeOutput();
     void Tick();
+    ConveyorState GetState();
 }

@@ -44,4 +44,6 @@ public class Conveyor : IConveyor
             }
         }
     }
+
+    public ConveyorState GetState() => new(_slots.Select(s => s?.GetState()).ToArray());
 }

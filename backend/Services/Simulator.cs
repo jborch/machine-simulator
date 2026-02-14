@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using MachineSimulator.Backend.Models;
 using MachineSimulator.Backend.Stations;
 
 namespace MachineSimulator.Backend.Services;
@@ -7,6 +8,8 @@ public class Simulator
 {
     private readonly List<IStation> _stations = new();
     private readonly ILogger<Simulator> _logger;
+
+    public SimulatorState? CurrentState { get; private set; }
 
     public Simulator(ILoggerFactory loggerFactory)
     {
@@ -42,6 +45,13 @@ public class Simulator
                 _logger.LogDebug("Moved {MoverId} from {Source} to {Destination}", mover.Id, station.Name, nextStation.Name);
             }
         }
+
+        CurrentState = GetState();
+    }
+
+    public SimulatorState GetState()
+    {
+        return new SimulatorState(_stations.Select(s => s.GetState()).ToList());
     }
 
     public async Task Run()

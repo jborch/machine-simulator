@@ -6,4 +6,5 @@ public interface IMover
     IItem? CurrentItem { get; }
     void Load(IItem item);
     void Unload();
+    MoverState GetState();
 }
