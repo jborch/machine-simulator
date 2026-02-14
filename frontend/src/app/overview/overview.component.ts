@@ -11,10 +11,11 @@ import {
 import { ConveyorComponent } from './conveyor.component';
 import { ProcessingStationComponent } from './processing-station.component';
 import { InfoPanelComponent } from './info-panel.component';
+import { CappingViewComponent } from './capping-view.component';
 
 @Component({
   selector: 'app-overview',
-  imports: [ConveyorComponent, ProcessingStationComponent, InfoPanelComponent],
+  imports: [ConveyorComponent, ProcessingStationComponent, InfoPanelComponent, CappingViewComponent],
   templateUrl: './overview.component.html',
 })
 export class OverviewComponent {

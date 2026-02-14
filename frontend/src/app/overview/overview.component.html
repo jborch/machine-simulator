@@ -49,8 +49,9 @@
   </span>
 </div>
 
+<div class="flex items-start gap-6">
 <div
-  class="grid grid-cols-[auto_1fr_auto] grid-rows-[auto_1fr_auto] gap-0 max-w-[900px]"
+  class="grid grid-cols-[auto_auto_auto] grid-rows-[auto_1fr_auto] gap-0 w-fit"
   data-testid="machine-loop"
 >
   <!-- Top-left: Buffer -->
@@ -126,4 +127,7 @@
       <app-conveyor [details]="d" orientation="horizontal" direction="reverse" />
     }
   </div>
+</div>
+
+<app-capping-view />
 </div>
