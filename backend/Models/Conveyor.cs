@@ -53,6 +53,7 @@ public class Conveyor : IMachine
     }
 
     public object GetState() => new ConveyorState(
+        SlotCount,
         _slots.Select((s, i) => (s, i))
               .Where(x => x.s != null)
               .ToDictionary(x => x.i, x => x.s!.GetState())

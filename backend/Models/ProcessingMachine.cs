@@ -1,10 +1,9 @@
 namespace MachineSimulator.Backend.Models;
 
-public class LoadingMachine
+public class ProcessingMachine
 {
-    private const int LoadingTicks = 100;
-
-    private readonly NestInfeed _infeed;
+    private readonly int _processingTicks;
+    private readonly string _processingState;
     private IMover? _currentMover;
     private int _ticksRemaining;
 
@@ -12,9 +11,10 @@ public class LoadingMachine
     public bool CanReceive => _currentMover == null;
     public bool HasOutput => State == "Done";
 
-    public LoadingMachine(NestInfeed infeed)
+    public ProcessingMachine(int processingTicks, string processingState = "Processing")
     {
-        _infeed = infeed;
+        _processingTicks = processingTicks;
+        _processingState = processingState;
     }
 
     public void Reset()
@@ -27,11 +27,11 @@ public class LoadingMachine
     public void Receive(IMover mover)
     {
         if (_currentMover != null)
-            throw new InvalidOperationException("LoadingMachine already has a mover.");
+            throw new InvalidOperationException("ProcessingMachine already has a mover.");
 
         _currentMover = mover;
-        _ticksRemaining = LoadingTicks;
-        State = "Loading";
+        _ticksRemaining = _processingTicks;
+        State = _processingState;
     }
 
     public IMover? Release()
@@ -47,24 +47,20 @@ public class LoadingMachine
 
     public void Tick()
     {
-        if (State != "Loading")
+        if (State != _processingState)
             return;
 
         _ticksRemaining--;
 
         if (_ticksRemaining <= 0)
-        {
-            var pen = _infeed.DispensePen();
-            ((ICarrier)_currentMover!).Load(pen);
             State = "Done";
-        }
     }
 
     public object GetState() => new
     {
-        State = State == "Loading" ? $"{LoadingTicks - _ticksRemaining}/{LoadingTicks}" : State,
+        State = State == _processingState ? $"{_processingTicks - _ticksRemaining}/{_processingTicks}" : State,
         Mover = _currentMover?.GetState(),
         TicksRemaining = _ticksRemaining,
-        TotalTicks = LoadingTicks
+        TotalTicks = _processingTicks
     };
 }

@@ -17,6 +17,7 @@ export interface SimulatorState {
 }
 
 export interface ConveyorDetails {
+  slotCount: number;
   slots: Record<number, MoverState>;
 }
 
@@ -28,6 +29,7 @@ export interface ProcessingDetails {
   state: string;
   mover: MoverState | null;
   ticksRemaining: number;
+  totalTicks: number;
 }
 
 export interface InfeedDetails {
@@ -43,9 +45,8 @@ export interface BufferDetails {
 }
 
 function defaultState(): SimulatorState {
-  const conveyor = (): ConveyorDetails => ({ slots: {} });
-  const station = (): StationDetails => ({ mover: null });
-  const processing = (): ProcessingDetails => ({ state: 'Idle', mover: null, ticksRemaining: 0 });
+  const conveyor = (): ConveyorDetails => ({ slotCount: 0, slots: {} });
+  const processing = (): ProcessingDetails => ({ state: 'Idle', mover: null, ticksRemaining: 0, totalTicks: 0 });
 
   return {
     isRunning: false,
@@ -54,9 +55,9 @@ function defaultState(): SimulatorState {
       { name: 'Buffer-DeNesting', details: conveyor() },
       { name: 'DeNesting', details: processing() },
       { name: 'DeNesting-Capping', details: conveyor() },
-      { name: 'Capping', details: station() },
+      { name: 'Capping', details: processing() },
       { name: 'Capping-Reject', details: conveyor() },
-      { name: 'Reject', details: station() },
+      { name: 'Reject', details: processing() },
       { name: 'Reject-Packing', details: conveyor() },
       { name: 'Packing', details: processing() },
       { name: 'Packing-Buffer', details: conveyor() },
@@ -77,9 +78,9 @@ export class StateService {
     this.connect();
   }
 
-  sendCommand(command: string): void {
+  sendCommand(command: string, value?: unknown): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ command }));
+      this.ws.send(JSON.stringify({ command, value }));
     }
   }
 

@@ -1,22 +1,19 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import {
   StateService,
-  MachineState,
   ConveyorDetails,
-  StationDetails,
   ProcessingDetails,
   InfeedDetails,
   OutfeedDetails,
   BufferDetails,
 } from '../state.service';
 import { ConveyorComponent } from './conveyor.component';
-import { StationComponent } from './station.component';
 import { ProcessingStationComponent } from './processing-station.component';
 import { InfoPanelComponent } from './info-panel.component';
 
 @Component({
   selector: 'app-overview',
-  imports: [ConveyorComponent, StationComponent, ProcessingStationComponent, InfoPanelComponent],
+  imports: [ConveyorComponent, ProcessingStationComponent, InfoPanelComponent],
   templateUrl: './overview.component.html',
 })
 export class OverviewComponent {
@@ -41,8 +38,8 @@ export class OverviewComponent {
   deNesting = computed(() => this.machine('DeNesting')?.details as ProcessingDetails | undefined);
   packing = computed(() => this.machine('Packing')?.details as ProcessingDetails | undefined);
 
-  capping = computed(() => this.machine('Capping')?.details as StationDetails | undefined);
-  reject = computed(() => this.machine('Reject')?.details as StationDetails | undefined);
+  capping = computed(() => this.machine('Capping')?.details as ProcessingDetails | undefined);
+  reject = computed(() => this.machine('Reject')?.details as ProcessingDetails | undefined);
   buffer = computed(() => this.machine('Buffer')?.details as BufferDetails | undefined);
 
   onRun(): void {
@@ -55,5 +52,19 @@ export class OverviewComponent {
 
   onReset(): void {
     this.stateService.sendCommand('reset');
+  }
+
+  speeds = [
+    { label: '1x', delay: 100 },
+    { label: '2x', delay: 50 },
+    { label: '5x', delay: 20 },
+    { label: '10x', delay: 10 },
+    { label: '20x', delay: 5 },
+  ];
+  activeSpeed = signal('1x');
+
+  onSpeed(speed: { label: string; delay: number }): void {
+    this.activeSpeed.set(speed.label);
+    this.stateService.sendCommand('setTickDelay', speed.delay);
   }
 }

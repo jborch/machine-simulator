@@ -4,6 +4,8 @@ namespace MachineSimulator.Backend.Stations;
 
 public class BufferStation : IMachine
 {
+    private const int ReleaseCooldown = 150;
+
     public string Name => "Buffer";
 
     private readonly Conveyor _input;
@@ -20,11 +22,12 @@ public class BufferStation : IMachine
     public void Reset()
     {
         _queue.Clear();
-        _ticksSinceLastOutput = 0;
+        _ticksSinceLastOutput = ReleaseCooldown;
     }
 
     public void Initialize()
     {
+        _ticksSinceLastOutput = ReleaseCooldown;
         for (int i = 0; i < 12; i++)
             _queue.Enqueue(new Mover($"mover-{i + 1}"));
     }
@@ -37,8 +40,8 @@ public class BufferStation : IMachine
         if (_input.Output != null)
             _queue.Enqueue(_input.TakeOutput()!);
 
-        // Release one to output conveyor at most every 10 ticks
-        if (_queue.Count > 0 && _output.Input == null && _ticksSinceLastOutput >= 10)
+        // Release one to output conveyor at most every ReleaseCooldown ticks
+        if (_queue.Count > 0 && _output.Input == null && _ticksSinceLastOutput >= ReleaseCooldown)
         {
             _output.Input = _queue.Dequeue();
             _ticksSinceLastOutput = 0;

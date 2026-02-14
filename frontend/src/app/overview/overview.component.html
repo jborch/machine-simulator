@@ -23,6 +23,22 @@
   >
     Reset
   </button>
+  <span class="flex items-center gap-1 ml-4">
+    @for (speed of speeds; track speed.label) {
+      <button
+        class="rounded border px-2 py-0.5 text-xs cursor-pointer"
+        [class.border-blue-500]="activeSpeed() === speed.label"
+        [class.bg-blue-50]="activeSpeed() === speed.label"
+        [class.text-blue-700]="activeSpeed() === speed.label"
+        [class.border-gray-300]="activeSpeed() !== speed.label"
+        [class.bg-white]="activeSpeed() !== speed.label"
+        [disabled]="!connected()"
+        (click)="onSpeed(speed)"
+      >
+        {{ speed.label }}
+      </button>
+    }
+  </span>
   <span class="flex items-center gap-1.5 text-xs text-gray-500 ml-2">
     <span
       class="inline-block w-2 h-2 rounded-full"
@@ -54,7 +70,7 @@
   <!-- Top edge: Buffer-DeNesting conveyor -->
   <div class="col-start-2 row-start-1 flex items-center p-1">
     @if (bufferDeNesting(); as d) {
-      <app-conveyor [slots]="d.slots" orientation="horizontal" direction="forward" />
+      <app-conveyor [details]="d" orientation="horizontal" direction="forward" />
     }
   </div>
 
@@ -71,23 +87,23 @@
   <!-- Left edge: Packing-Buffer conveyor -->
   <div class="col-start-1 row-start-2 flex flex-col-reverse items-center p-1">
     @if (packingBuffer(); as d) {
-      <app-conveyor [slots]="d.slots" orientation="vertical" direction="reverse" />
+      <app-conveyor [details]="d" orientation="vertical" direction="reverse" />
     }
   </div>
 
   <!-- Right edge: DeNesting-Capping, Capping, Capping-Reject, Reject -->
   <div class="col-start-3 row-start-2 row-span-2 flex flex-col items-start gap-1 p-1">
     @if (deNestingCapping(); as d) {
-      <app-conveyor [slots]="d.slots" orientation="vertical" direction="forward" />
+      <app-conveyor [details]="d" orientation="vertical" direction="forward" />
     }
     @if (capping(); as d) {
-      <app-station name="Capping" [mover]="d.mover" />
+      <app-processing-station name="Capping" [details]="d" />
     }
     @if (cappingReject(); as d) {
-      <app-conveyor [slots]="d.slots" orientation="vertical" direction="forward" />
+      <app-conveyor [details]="d" orientation="vertical" direction="forward" />
     }
     @if (reject(); as d) {
-      <app-station name="Reject" [mover]="d.mover" />
+      <app-processing-station name="Reject" [details]="d" />
     }
   </div>
 
@@ -104,7 +120,7 @@
   <!-- Bottom edge: Reject-Packing conveyor -->
   <div class="col-start-2 row-start-3 flex items-center p-1">
     @if (rejectPacking(); as d) {
-      <app-conveyor [slots]="d.slots" orientation="horizontal" direction="reverse" />
+      <app-conveyor [details]="d" orientation="horizontal" direction="reverse" />
     }
   </div>
 </div>

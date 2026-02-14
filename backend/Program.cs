@@ -26,40 +26,48 @@ app.Map("/ws", async context =>
         var socket = await context.WebSockets.AcceptWebSocketAsync();
         webSocketServer.AddClient(socket);
 
-        var buffer = new byte[1024];
-        while (socket.State == WebSocketState.Open)
+        try
         {
-            var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), context.RequestAborted);
-            if (result.MessageType == WebSocketMessageType.Close)
+            var buffer = new byte[1024];
+            while (socket.State == WebSocketState.Open)
             {
-                await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
-            }
-            else if (result.MessageType == WebSocketMessageType.Text)
-            {
-                var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                try
+                var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), context.RequestAborted);
+                if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    var doc = JsonDocument.Parse(message);
-                    var command = doc.RootElement.GetProperty("command").GetString();
-                    switch (command)
-                    {
-                        case "start":
-                            simulator.Start();
-                            break;
-                        case "stop":
-                            simulator.Stop();
-                            break;
-                        case "reset":
-                            simulator.Reset();
-                            break;
-                    }
+                    await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
                 }
-                catch (Exception)
+                else if (result.MessageType == WebSocketMessageType.Text)
                 {
-                    // Ignore malformed messages
+                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    try
+                    {
+                        var doc = JsonDocument.Parse(message);
+                        var command = doc.RootElement.GetProperty("command").GetString();
+                        switch (command)
+                        {
+                            case "start":
+                                simulator.Start();
+                                break;
+                            case "stop":
+                                simulator.Stop();
+                                break;
+                            case "reset":
+                                simulator.Reset();
+                                break;
+                            case "setTickDelay":
+                                var delay = doc.RootElement.GetProperty("value").GetInt32();
+                                simulator.SetTickDelay(delay);
+                                break;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Ignore malformed messages
+                    }
                 }
             }
         }
+        catch (OperationCanceledException) { }
     }
     else
     {

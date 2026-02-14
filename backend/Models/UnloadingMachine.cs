@@ -2,7 +2,7 @@ namespace MachineSimulator.Backend.Models;
 
 public class UnloadingMachine
 {
-    private const int UnloadingTicks = 10;
+    private const int UnloadingTicks = 100;
 
     private readonly CartonOutfeed _outfeed;
     private IMover? _currentMover;
@@ -64,8 +64,9 @@ public class UnloadingMachine
 
     public object GetState() => new
     {
-        State,
+        State = State == "Unloading" ? $"{UnloadingTicks - _ticksRemaining}/{UnloadingTicks}" : State,
         Mover = _currentMover?.GetState(),
-        TicksRemaining = _ticksRemaining
+        TicksRemaining = _ticksRemaining,
+        TotalTicks = UnloadingTicks
     };
 }

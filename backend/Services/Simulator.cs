@@ -11,6 +11,7 @@ public class Simulator
     private readonly WebSocketServer _webSocketServer;
     private bool _running;
     private bool _resetRequested;
+    private int _tickDelay = 100;
 
     public SimulatorState? CurrentState { get; private set; }
 
@@ -19,29 +20,31 @@ public class Simulator
         _logger = loggerFactory.CreateLogger<Simulator>();
         _webSocketServer = webSocketServer;
 
-        var conveyorDN = new Conveyor("Buffer-DeNesting", 100);
-        var conveyorDC = new Conveyor("DeNesting-Capping", 100);
-        var conveyorCR = new Conveyor("Capping-Reject", 100);
-        var conveyorRP = new Conveyor("Reject-Packing", 100);
-        var conveyorPB = new Conveyor("Packing-Buffer", 100);
+        var conveyorDN = new Conveyor("Buffer-DeNesting", 200);
+        var conveyorDC = new Conveyor("DeNesting-Capping", 200);
+        var conveyorCR = new Conveyor("Capping-Reject", 200);
+        var conveyorRP = new Conveyor("Reject-Packing", 200);
+        var conveyorPB = new Conveyor("Packing-Buffer", 200);
 
         var nestInfeed = new NestInfeed();
         var cartonOutfeed = new CartonOutfeed();
 
+        // Stations tick before conveyors so they only see movers
+        // that reached the conveyor output on a previous tick.
         _machines =
         [
             nestInfeed,
-            conveyorDN,
             new DeNestingStation(conveyorDN, conveyorDC, nestInfeed),
-            conveyorDC,
             new CappingStation(conveyorDC, conveyorCR),
-            conveyorCR,
             new RejectStation(conveyorCR, conveyorRP),
-            conveyorRP,
             new PackingStation(conveyorRP, conveyorPB, cartonOutfeed),
-            conveyorPB,
             new BufferStation(conveyorPB, conveyorDN),
             cartonOutfeed,
+            conveyorDN,
+            conveyorDC,
+            conveyorCR,
+            conveyorRP,
+            conveyorPB,
         ];
 
         foreach (var machine in _machines)
@@ -51,6 +54,7 @@ public class Simulator
     public void Start() => _running = true;
     public void Stop() => _running = false;
     public void Reset() => _resetRequested = true;
+    public void SetTickDelay(int ms) => _tickDelay = Math.Max(1, ms);
 
     public async Task Run(bool idle, CancellationToken ct)
     {
@@ -83,7 +87,7 @@ public class Simulator
                 );
                 await _webSocketServer.BroadcastAsync(CurrentState);
 
-                await Task.Delay(100, ct);
+                await Task.Delay(_tickDelay, ct);
             }
         }
         catch (OperationCanceledException) { }

@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { MoverState } from '../state.service';
+import { ConveyorDetails } from '../state.service';
 
 @Component({
   selector: 'app-conveyor',
@@ -28,14 +28,13 @@ import { MoverState } from '../state.service';
   `,
 })
 export class ConveyorComponent {
-  slots = input.required<Record<number, MoverState>>();
-  slotCount = input(100);
+  details = input.required<ConveyorDetails>();
   orientation = input<'horizontal' | 'vertical'>('horizontal');
   direction = input<'forward' | 'reverse'>('forward');
 
   allSlots = () => {
-    const slots = this.slots();
-    return Array.from({ length: this.slotCount() }, (_, i) => {
+    const { slotCount, slots } = this.details();
+    return Array.from({ length: slotCount }, (_, i) => {
       const mover = slots[i];
       return {
         index: i,

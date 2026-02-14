@@ -8,7 +8,7 @@ public class CappingStation : IMachine
 
     private readonly Conveyor _input;
     private readonly Conveyor _output;
-    private IMover? _mover;
+    private readonly ProcessingMachine _machine = new(105, "Capping");
 
     public CappingStation(Conveyor input, Conveyor output)
     {
@@ -16,19 +16,18 @@ public class CappingStation : IMachine
         _output = output;
     }
 
-    public void Reset() => _mover = null;
+    public void Reset() => _machine.Reset();
 
     public void Tick()
     {
-        if (_mover != null && _output.Input == null)
-        {
-            _output.Input = _mover;
-            _mover = null;
-        }
+        _machine.Tick();
 
-        if (_mover == null && _input.Output != null)
-            _mover = _input.TakeOutput();
+        if (_machine.HasOutput && _output.Input == null)
+            _output.Input = _machine.Release();
+
+        if (_input.Output != null && _machine.CanReceive)
+            _machine.Receive(_input.TakeOutput()!);
     }
 
-    public object GetState() => new { Mover = _mover?.GetState() };
+    public object GetState() => _machine.GetState();
 }
