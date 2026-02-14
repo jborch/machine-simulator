@@ -1,1 +1,9 @@
-<router-outlet />
+@if (!connected()) {
+  <p>Connecting...</p>
+} @else {
+  <div>
+    <button data-testid="run-btn" [disabled]="isRunning()" (click)="onRun()">Run</button>
+    <button data-testid="stop-btn" [disabled]="!isRunning()" (click)="onStop()">Stop</button>
+  </div>
+  <pre data-testid="state-json">{{ stateJson() }}</pre>
+}

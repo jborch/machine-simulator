@@ -9,6 +9,7 @@ public class Simulator
     private readonly List<IStation> _stations = new();
     private readonly ILogger<Simulator> _logger;
     private readonly WebSocketServer _webSocketServer;
+    private bool _running;
 
     public SimulatorState? CurrentState { get; private set; }
 
@@ -52,19 +53,31 @@ public class Simulator
         _ = _webSocketServer.BroadcastAsync(CurrentState);
     }
 
+    public void Start() => _running = true;
+    public void Stop() => _running = false;
+
     public SimulatorState GetState()
     {
-        return new SimulatorState(_stations.Select(s => s.GetState()).ToList());
+        return new SimulatorState(_running, _stations.Select(s => s.GetState()).ToList());
     }
 
-    public async Task Run()
+    public async Task Run(bool idle = false)
     {
-        _logger.LogInformation("Simulator running with {StationCount} stations.", _stations.Count);
+        _running = !idle;
+        _logger.LogInformation("Simulator running with {StationCount} stations (idle={Idle}).", _stations.Count, idle);
 
         while (true)
         {
-            Tick();
-            await Task.Delay(10);
+            if (_running)
+            {
+                Tick();
+            }
+            else
+            {
+                CurrentState = GetState();
+                await _webSocketServer.BroadcastAsync(CurrentState);
+            }
+            await Task.Delay(100);
         }
     }
 }
