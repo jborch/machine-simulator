@@ -2,5 +2,10 @@ namespace MachineSimulator.Backend.Models;
 
 public record SimulatorState(
     bool IsRunning,
-    List<StationState> Stations
+    List<MachineState> Machines
+);
+
+public record MachineState(
+    string Name,
+    object Details
 );
