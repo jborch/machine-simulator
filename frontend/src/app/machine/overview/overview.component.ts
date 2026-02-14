@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MachineService } from '../machine.service';
 import { Mover, Station } from '../machine-state';
 
 @Component({
   selector: 'app-overview',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './overview.component.html',
   styles: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
