@@ -8,12 +8,13 @@ public class PackingStation : IMachine
 
     private readonly Conveyor _input;
     private readonly Conveyor _output;
-    private readonly UnloadingMachine _machine = new();
+    private readonly UnloadingMachine _machine;
 
-    public PackingStation(Conveyor input, Conveyor output)
+    public PackingStation(Conveyor input, Conveyor output, CartonOutfeed outfeed)
     {
         _input = input;
         _output = output;
+        _machine = new UnloadingMachine(outfeed);
     }
 
     public void Tick()

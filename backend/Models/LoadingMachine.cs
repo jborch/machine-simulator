@@ -4,13 +4,18 @@ public class LoadingMachine
 {
     private const int LoadingTicks = 10;
 
+    private readonly NestInfeed _infeed;
     private IMover? _currentMover;
     private int _ticksRemaining;
-    private int _penCounter;
 
     public string State { get; private set; } = "Idle";
     public bool CanReceive => _currentMover == null;
     public bool HasOutput => State == "Done";
+
+    public LoadingMachine(NestInfeed infeed)
+    {
+        _infeed = infeed;
+    }
 
     public void Receive(IMover mover)
     {
@@ -42,8 +47,7 @@ public class LoadingMachine
 
         if (_ticksRemaining <= 0)
         {
-            _penCounter++;
-            var pen = new Pen($"pen-{_penCounter}");
+            var pen = _infeed.DispensePen();
             ((ICarrier)_currentMover!).Load(pen);
             State = "Done";
         }

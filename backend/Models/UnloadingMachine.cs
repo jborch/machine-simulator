@@ -4,12 +4,18 @@ public class UnloadingMachine
 {
     private const int UnloadingTicks = 10;
 
+    private readonly CartonOutfeed _outfeed;
     private IMover? _currentMover;
     private int _ticksRemaining;
 
     public string State { get; private set; } = "Idle";
     public bool CanReceive => _currentMover == null;
     public bool HasOutput => State == "Done";
+
+    public UnloadingMachine(CartonOutfeed outfeed)
+    {
+        _outfeed = outfeed;
+    }
 
     public void Receive(IMover mover)
     {
@@ -41,7 +47,10 @@ public class UnloadingMachine
 
         if (_ticksRemaining <= 0)
         {
-            ((ICarrier)_currentMover!).Unload();
+            var carrier = (ICarrier)_currentMover!;
+            if (carrier.CurrentItem != null)
+                _outfeed.AcceptItem(carrier.CurrentItem);
+            carrier.Unload();
             State = "Done";
         }
     }

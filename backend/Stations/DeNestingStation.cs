@@ -8,12 +8,13 @@ public class DeNestingStation : IMachine
 
     private readonly Conveyor _input;
     private readonly Conveyor _output;
-    private readonly LoadingMachine _machine = new();
+    private readonly LoadingMachine _machine;
 
-    public DeNestingStation(Conveyor input, Conveyor output)
+    public DeNestingStation(Conveyor input, Conveyor output, NestInfeed infeed)
     {
         _input = input;
         _output = output;
+        _machine = new LoadingMachine(infeed);
     }
 
     public void Tick()

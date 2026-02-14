@@ -24,21 +24,26 @@ public class Simulator
         var conveyorRP = new Conveyor("Reject-Packing", 100);
         var conveyorPB = new Conveyor("Packing-Buffer", 100);
 
+        var nestInfeed = new NestInfeed();
+        var cartonOutfeed = new CartonOutfeed();
+
         for (int i = 0; i < 12; i++)
             conveyorDN.PlaceAt(i * 8, new Mover($"mover-{i + 1}"));
 
         _machines =
         [
+            nestInfeed,
             conveyorDN,
-            new DeNestingStation(conveyorDN, conveyorDC),
+            new DeNestingStation(conveyorDN, conveyorDC, nestInfeed),
             conveyorDC,
             new CappingStation(conveyorDC, conveyorCR),
             conveyorCR,
             new RejectStation(conveyorCR, conveyorRP),
             conveyorRP,
-            new PackingStation(conveyorRP, conveyorPB),
+            new PackingStation(conveyorRP, conveyorPB, cartonOutfeed),
             conveyorPB,
             new BufferStation(conveyorPB, conveyorDN),
+            cartonOutfeed,
         ];
     }
 
